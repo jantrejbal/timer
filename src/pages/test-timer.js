@@ -61,16 +61,48 @@ export default function TestTimer() {
     <>
       <Head>
         <title>Timer Test</title>
+        <style>{`
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+          }
+          .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+          }
+          .timer-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+          }
+          .waiting-message {
+            color: #5b06be;
+            font-size: 1rem;
+            margin-top: 1rem;
+          }
+        `}</style>
       </Head>
 
-      <div className="flex justify-center items-center min-h-screen">
-        <div id="timer-container" className="text-center">
-          <div id="timer-display" className="text-4xl font-bold">
+      <div className="container">
+        <div className="timer-box">
+          <div className="timer-display">
             {formatTime(timeRemaining)}
           </div>
           {!timerStarted && (
-            <div id="timer-waiting" className="text-purple-600 text-sm mt-2">
-              Waiting to start...
+            <div className="waiting-message">
+              Waiting to start... 
+              <br />
+              Open console (F12) and run: window.startTimer('123')
             </div>
           )}
         </div>

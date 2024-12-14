@@ -1,68 +1,80 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Timer Test</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        #timer-container {
-            text-align: center;
-            font-size: 2rem;
-        }
-        #timer-waiting {
-            color: #5b06be;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div id="timer-container">
-        <div id="timer-display"></div>
-        <div id="timer-waiting">Waiting to start...</div>
-    </div>
+import { useState, useEffect } from 'react';
+import Head from 'next/head';
 
-    <script>
-        let timeRemaining = 600;
-        let timerId;
-        let timerStarted = false;
+export default function TestTimer() {
+  const [timeRemaining, setTimeRemaining] = useState(600);
+  const [timerStarted, setTimerStarted] = useState(false);
+  const [timerId, setTimerId] = useState(null);
 
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    // Make startTimer available globally
+    window.startTimer = (sessionId) => {
+      console.log('Timer start triggered with sessionId:', sessionId);
+      if (timerStarted) {
+        console.log('Timer already started');
+        return;
+      }
+
+      fetch('/api/start-timer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          memberId: 'test'
+        })
+      })
+      .then(response => {
+        console.log('Timer start response:', response);
+        if (response.ok) {
+          setTimerStarted(true);
+          const id = setInterval(() => {
+            setTimeRemaining(prev => {
+              if (prev <= 1) {
+                clearInterval(id);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          setTimerId(id);
         }
+      })
+      .catch(error => console.error('Error starting timer:', error));
+    };
 
-        function updateTimer() {
-            if (timeRemaining <= 0) {
-                clearInterval(timerId);
-                document.getElementById('timer-display').textContent = "Time's up!";
-                return;
-            }
-            document.getElementById('timer-display').textContent = formatTime(timeRemaining);
-            timeRemaining--;
-        }
+    return () => {
+      if (timerId) {
+        clearInterval(timerId);
+      }
+    };
+  }, [timerStarted]);
 
-        // Initialize display
-        document.getElementById('timer-display').textContent = formatTime(timeRemaining);
+  return (
+    <>
+      <Head>
+        <title>Timer Test</title>
+      </Head>
 
-        window.startTimer = function(sessionId) {
-            if (timerStarted) return;
-            if (sessionId !== '123') {
-                console.log('Invalid session ID');
-                return;
-            }
-            
-            console.log('Starting timer with session ID:', sessionId);
-            timerStarted = true;
-            document.getElementById('timer-waiting').remove();
-            timerId = setInterval(updateTimer, 1000);
-        };
-    </script>
-</body>
-</html>
+      <div className="flex justify-center items-center min-h-screen">
+        <div id="timer-container" className="text-center">
+          <div id="timer-display" className="text-4xl font-bold">
+            {formatTime(timeRemaining)}
+          </div>
+          {!timerStarted && (
+            <div id="timer-waiting" className="text-purple-600 text-sm mt-2">
+              Waiting to start...
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
